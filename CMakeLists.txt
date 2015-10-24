@@ -10,6 +10,8 @@ set(libname "scripts")
 set( PY_CODE
     backup.py
     replace.py
+    find_duplicate.py
+    rename_files.py
 )
 
 source_group( "script" FILES ${PY_CODE} )
