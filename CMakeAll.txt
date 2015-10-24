@@ -1,0 +1,120 @@
+set(QTDIR $ENV{QTDIR})
+set(BOOSTDIR $ENV{BOOSTDIR})
+
+set(CMAKE_BUILD_TYPE Debug)
+
+###############################################################################
+
+if ( ${APPLE} EQUAL "1" )
+	set(CMAKE_FIND_LIBRARY_PREFIXES "")
+	set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib")
+
+	set(CMAKE_PREFIX_PATH "${QTDIR}/clang_64/")
+	set(CMAKE_MODULE_PATH ./clang_64/lib/cmake)
+
+	SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)	
+
+#     cmake_policy(SET CMP0042 OLD)
+
+endif( ${APPLE} EQUAL "1")
+
+###############################################################################
+
+include_directories(
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/..
+    ${BOOSTDIR}
+)
+
+############################################################################### 
+# Enable cpp11 compilation
+
+# add_definitions(  "-std=c++98" )
+
+set (CPP11_COMPILE_FLAGS "-std=c++11" )
+add_definitions( ${CPP11_COMPILE_FLAGS} )
+
+add_definitions( "-pedantic" )
+add_definitions( "-g" )
+
+###############################################################################
+# Qt Specific Flags 
+#
+#
+
+# set(CMAKE_MODULE_PATH ./clang_64/lib/cmake)
+
+
+# always genaerate moc files when needed
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+# Find the QtWidgets library
+find_package(Qt5Widgets)
+find_package(Qt5Core)
+find_package(Qt5Gui)
+find_package(Qt5Sql)
+find_package(Qt5Xml)
+find_package(Qt5PrintSupport)
+
+# find_package(OpenGL)
+add_definitions(-DQT_NO_OPENGL)
+# system specficic
+set(QT_INCLUDE_DIR ${QTDIR}/ios/include) 
+set(QT_LIB_DIR     ${QTDIR}/ios/lib)
+set(QT_INCLUDE
+     ${QT_INCLUDE_DIR} 
+     ${QT_INCLUDE_DIR}/QtWidgets
+     ${QT_INCLUDE_DIR}/QtCore
+     ${QT_INCLUDE_DIR}/QtXml 
+     ${QT_INCLUDE_DIR}/QtGui
+     ${QT_INCLUDE_DIR}/QtSql
+     ${QT_INCLUDE_DIR}/QtPrintSupport
+)
+
+
+############################################################################### 
+# Dox support
+
+find_package(doxygen)
+
+###############################################################################
+# create a symbolic link to xpexecute in pbindir for each file in bindir      
+
+macro(MAKEBINLINK binname) 
+    set(${binname})
+    INSTALL(CODE
+        "EXECUTE_PROCESS(
+            COMMAND ${inst_bin_dir}/createlink ${binname}
+        )"
+    )
+endmacro(MAKEBINLINK binname)
+
+###############################################################################                                                  
+# The test code
+
+macro(AddUnitClassTestCase classname dep_lib)
+
+    message(${classname} " " ${dep_lib} )
+
+    set(testfile     test${classname}.cpp)
+    set(includefile  ${classname}.h )
+    set(testfunc     test${classname} )
+
+    file(WRITE ${testfile}
+         "#include \"${includefile}\" \n"
+         "int main(const int argv, const char** argc) \n"
+         "{ \n"
+         "    return ${testfunc}(argv, argc);\n"
+         "};\n"
+    )
+
+    add_executable( ${testfunc} ${testfile} )
+    target_link_libraries( ${testfunc} ${dep_lib} )
+
+endmacro(AddUnitClassTestCase classname dep_lib)
+
+###############################################################################
+
+# the list of directories where to find the link files
+link_directories( ${inst_lib_dir} )
