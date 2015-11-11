@@ -1,0 +1,17 @@
+#!/bin/sh 
+
+# print 10 largests files in the current directory
+
+DIR=$1
+CWD="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
+
+if [ "$DIR" = "" ];then
+    DIR=`pwd`
+fi
+
+NB=10
+
+echo "#####################################################"
+echo "Large $NB files in $DIR"
+ls -laSh $DIR | awk '{printf "%5s %s\n", $5,$9}' | head -n $NB
+echo "#####################################################"
